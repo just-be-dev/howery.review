@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/wrangler.json",
+  "name": "howery-review-email",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-03-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "send_email": [
+    {
+      "name": "EMAIL"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "ATTACHMENTS",
+      "bucket_name": "howery-review-attachments"
+    }
+  ]
+}

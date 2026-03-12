@@ -8,13 +8,17 @@ function slugify(text: string): string {
 }
 
 export default {
-  async email(message: ForwardableEmailMessage, env: Env, ctx: ExecutionContext) {
+  async email(
+    message: ForwardableEmailMessage,
+    env: Env,
+    ctx: ExecutionContext,
+  ) {
     if (message.to !== "post@howery.review") {
       message.setReject("Unknown recipient");
       return;
     }
 
-    if (message.from !== "howeryp@hotmail.com") {
+    if (!["howeryp@hotmail.com", "joyangda@gmail.com"].includes(message.from)) {
       message.setReject("Unauthorized sender");
       return;
     }

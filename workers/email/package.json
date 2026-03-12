@@ -1,0 +1,12 @@
+{
+  "name": "howery-review-email",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "dependencies": {
+    "postal-mime": "^2.7.3",
+    "wrangler": "^4.72.0"
+  }
+}
