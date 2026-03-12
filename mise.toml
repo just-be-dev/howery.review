@@ -23,16 +23,16 @@ run = "bunx --bun astro build"
 description = "Preview the production build"
 run = "bunx --bun astro preview"
 
-[tasks.deploy-main]
+[tasks."deploy:main"]
 description = "Deploy main site"
 depends = ["build"]
 run = "wrangler deploy"
 
-[tasks.deploy-email]
+[tasks."deploy:email"]
 description = "Deploy email worker"
 run = "cd workers/email && wrangler deploy --config wrangler.jsonc"
 
 [tasks.deploy]
 description = "Deploy both workers"
-depends = ["deploy-main", "deploy-email"]
+depends = ["deploy:main", "deploy:email"]
 run = "echo '✅ Both workers deployed!'"
