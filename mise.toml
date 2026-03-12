@@ -1,0 +1,24 @@
+[tools]
+bun = "1.3.10"
+
+[settings]
+experimental = true
+pin = true
+
+[hooks]
+postinstall = "bun install"
+
+[env]
+_.path = "node_modules/.bin"
+
+[tasks.dev]
+description = "Start development server"
+run = "bunx --bun astro dev"
+
+[tasks.build]
+description = "Build the project"
+run = "bunx --bun astro build"
+
+[tasks.preview]
+description = "Preview the production build"
+run = "bunx --bun astro preview"
