@@ -1,0 +1,360 @@
+---
+import Base from "../layouts/Base.astro";
+import { verifyAuth } from "../lib/auth";
+import { listReviews } from "../lib/reviews";
+import { env } from "cloudflare:workers";
+
+const password = env.EDIT_PASSWORD;
+const isAuthed = password && await verifyAuth(Astro.request, password);
+
+let reviews = [];
+if (isAuthed) {
+  const bucket = env.ATTACHMENTS;
+  reviews = await listReviews(bucket);
+}
+
+const error = Astro.url.searchParams.get("error");
+---
+
+<Base title="Edit Reviews">
+  {!isAuthed ? (
+    <div class="login-container">
+      <h2>Admin Login</h2>
+      {error && <div class="error-message">Invalid password</div>}
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            autofocus
+            class="password-input"
+          />
+        </div>
+        <button type="submit" class="submit-btn">Login</button>
+      </form>
+    </div>
+  ) : (
+    <div class="edit-container">
+      <h2>Edit Reviews</h2>
+      {reviews.length === 0 ? (
+        <p class="no-reviews">No reviews found.</p>
+      ) : (
+        <div class="reviews-table">
+          {reviews.map((review) => (
+            <div class="review-row" data-slug={review.slug}>
+              <form class="review-form">
+                <div class="form-group">
+                  <label for="title-{review.slug}">Title:</label>
+                  <input
+                    type="text"
+                    id="title-{review.slug}"
+                    class="title-input"
+                    value={review.title}
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="date-{review.slug}">Date:</label>
+                  <input
+                    type="date"
+                    id="date-{review.slug}"
+                    class="date-input"
+                    value={new Date(review.date).toISOString().split("T")[0]}
+                    required
+                  />
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="save-btn">Save</button>
+                  <button type="button" class="delete-btn">Delete</button>
+                </div>
+              </form>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )}
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Login form handler
+      const loginForm = document.getElementById("login-form");
+      if (loginForm) {
+        loginForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const passwordInput = loginForm.querySelector(
+            "#password"
+          ) as HTMLInputElement;
+
+          try {
+            const response = await fetch("/api/auth", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ password: passwordInput.value }),
+            });
+
+            if (response.redirected) {
+              window.location.href = response.url;
+            } else if (!response.ok) {
+              window.location.href = "/edit?error=1";
+            }
+          } catch (error) {
+            console.error("Login error:", error);
+            window.location.href = "/edit?error=1";
+          }
+        });
+      }
+
+      // Save button handlers
+      document.querySelectorAll(".save-btn").forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          const form = (e.target as HTMLElement).closest(".review-form") as HTMLFormElement;
+          const row = form.closest(".review-row") as HTMLElement;
+          const slug = row.dataset.slug;
+
+          const titleInput = form.querySelector(".title-input") as HTMLInputElement;
+          const dateInput = form.querySelector(".date-input") as HTMLInputElement;
+
+          try {
+            const response = await fetch(`/api/review/${slug}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                title: titleInput.value,
+                date: new Date(dateInput.value).toISOString(),
+              }),
+            });
+
+            if (response.ok) {
+              row.classList.add("saved");
+              setTimeout(() => row.classList.remove("saved"), 2000);
+            } else {
+              alert("Failed to save review");
+            }
+          } catch (error) {
+            console.error("Save error:", error);
+            alert("Error saving review");
+          }
+        });
+      });
+
+      // Delete button handlers
+      document.querySelectorAll(".delete-btn").forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          const form = (e.target as HTMLElement).closest(".review-form") as HTMLFormElement;
+          const row = form.closest(".review-row") as HTMLElement;
+          const slug = row.dataset.slug;
+
+          if (!confirm("Are you sure you want to delete this review?")) {
+            return;
+          }
+
+          try {
+            const response = await fetch(`/api/review/${slug}`, {
+              method: "DELETE",
+            });
+
+            if (response.ok) {
+              row.remove();
+            } else {
+              alert("Failed to delete review");
+            }
+          } catch (error) {
+            console.error("Delete error:", error);
+            alert("Error deleting review");
+          }
+        });
+      });
+    });
+  </script>
+
+  <style>
+    .login-container {
+      max-width: 24rem;
+      margin: 3rem auto;
+      padding: 2rem;
+      background: var(--paper-dark);
+      border: 2px solid var(--paper-dark);
+    }
+
+    .login-container h2 {
+      font-family: "Playfair Display", serif;
+      font-weight: 700;
+      font-size: 2rem;
+      color: var(--red-dark);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .error-message {
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      background: rgba(185, 28, 28, 0.1);
+      border-left: 4px solid var(--red);
+      color: var(--red-dark);
+      font-family: "Special Elite", cursive;
+    }
+
+    .login-form .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .login-form label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-family: "Special Elite", cursive;
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    .password-input {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--paper);
+      border: 1px solid var(--paper-dark);
+      color: var(--ink);
+      font-family: monospace;
+      font-size: 1rem;
+    }
+
+    .password-input:focus {
+      outline: none;
+      border-color: var(--red);
+      box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.2);
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--red);
+      color: white;
+      border: none;
+      font-family: "Special Elite", cursive;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .submit-btn:hover {
+      background: var(--red-dark);
+    }
+
+    .edit-container h2 {
+      font-family: "Playfair Display", serif;
+      font-weight: 700;
+      font-size: 2rem;
+      color: var(--red-dark);
+      margin-bottom: 2rem;
+    }
+
+    .no-reviews {
+      text-align: center;
+      color: var(--gold);
+      font-family: "Special Elite", cursive;
+      padding: 2rem;
+    }
+
+    .reviews-table {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .review-row {
+      padding: 1.5rem;
+      background: var(--paper-dark);
+      border: 1px solid var(--paper-dark);
+      transition: box-shadow 0.2s;
+    }
+
+    .review-row.saved {
+      box-shadow: inset 0 0 0 2px var(--red), inset 0 0 0 3px var(--paper-dark);
+    }
+
+    .review-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 1rem;
+      align-items: flex-end;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-family: "Special Elite", cursive;
+      font-size: 0.85rem;
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .title-input,
+    .date-input {
+      padding: 0.5rem;
+      background: var(--paper);
+      border: 1px solid var(--ink);
+      color: var(--ink);
+      font-family: "Libre Baskerville", serif;
+      font-size: 0.95rem;
+    }
+
+    .title-input:focus,
+    .date-input:focus {
+      outline: none;
+      border-color: var(--red);
+      box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.2);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .save-btn,
+    .delete-btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      font-family: "Special Elite", cursive;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .save-btn {
+      background: var(--red);
+      color: white;
+    }
+
+    .save-btn:hover {
+      background: var(--red-dark);
+    }
+
+    .delete-btn {
+      background: var(--gold);
+      color: var(--ink);
+    }
+
+    .delete-btn:hover {
+      background: var(--gold-light);
+    }
+
+    @media (max-width: 768px) {
+      .review-form {
+        grid-template-columns: 1fr;
+      }
+
+      .form-actions {
+        grid-column: 1;
+      }
+    }
+  </style>
+</Base>

@@ -13,15 +13,15 @@ _.path = "node_modules/.bin"
 
 [tasks.dev]
 description = "Start development server"
-run = "bunx --bun astro dev"
+run = "astro dev"
 
 [tasks.build]
 description = "Build the project"
-run = "bunx --bun astro build"
+run = "astro build"
 
 [tasks.preview]
 description = "Preview the production build"
-run = "bunx --bun astro preview"
+run = "astro preview"
 
 [tasks."deploy:main"]
 description = "Deploy main site"
@@ -30,9 +30,9 @@ run = "wrangler deploy"
 
 [tasks."deploy:email"]
 description = "Deploy email worker"
-run = "cd workers/email && wrangler deploy --config wrangler.jsonc"
+dir = "workers/email"
+run = "wrangler deploy --config wrangler.jsonc"
 
 [tasks.deploy]
 description = "Deploy both workers"
 depends = ["deploy:main", "deploy:email"]
-run = "echo '✅ Both workers deployed!'"

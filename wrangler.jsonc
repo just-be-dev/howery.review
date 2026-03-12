@@ -16,4 +16,11 @@
       "bucket_name": "howery-review-attachments",
     },
   ],
+  "env": {
+    "development": {
+      "vars": {
+        "EDIT_PASSWORD": "test123",
+      },
+    },
+  },
 }
