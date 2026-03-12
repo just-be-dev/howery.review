@@ -12,6 +12,7 @@
   "dependencies": {
     "@astrojs/check": "^0.9.7",
     "@astrojs/cloudflare": "^13.1.1",
+    "@astrojs/rss": "^4.0.17",
     "astro": "^6.0.4",
     "mammoth": "^1.11.0",
     "mimetext": "^3.0.28",
