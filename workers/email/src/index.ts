@@ -35,23 +35,31 @@ export default {
     const slug = slugify(subject);
     const timestamp = new Date().toISOString();
 
-    // Find the first Word document attachment
-    const docAttachment = parsed.attachments.find(
+    // Find the first Word document or PDF attachment
+    const reviewAttachment = parsed.attachments.find(
       (a) =>
         a.mimeType ===
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+        a.mimeType === "application/pdf" ||
         a.filename?.endsWith(".docx") ||
-        a.filename?.endsWith(".doc"),
+        a.filename?.endsWith(".doc") ||
+        a.filename?.endsWith(".pdf"),
     );
 
-    if (!docAttachment) {
-      message.setReject("No Word document attachment found");
+    if (!reviewAttachment) {
+      message.setReject("No Word document or PDF attachment found");
       return;
     }
 
-    const key = `reviews/${slug}/review.docx`;
-    await env.ATTACHMENTS.put(key, docAttachment.content, {
-      httpMetadata: { contentType: docAttachment.mimeType },
+    // Determine file extension based on MIME type or filename
+    const isPdf =
+      reviewAttachment.mimeType === "application/pdf" ||
+      reviewAttachment.filename?.endsWith(".pdf");
+    const extension = isPdf ? "pdf" : "docx";
+
+    const key = `reviews/${slug}/review.${extension}`;
+    await env.ATTACHMENTS.put(key, reviewAttachment.content, {
+      httpMetadata: { contentType: reviewAttachment.mimeType },
       customMetadata: {
         title: subject,
         slug,
@@ -64,7 +72,7 @@ export default {
 
     // Store any additional attachments (images, etc.) alongside the review
     for (const attachment of parsed.attachments) {
-      if (attachment === docAttachment) continue;
+      if (attachment === reviewAttachment) continue;
       const filename = attachment.filename ?? "unnamed";
       const attachKey = `reviews/${slug}/${filename}`;
       await env.ATTACHMENTS.put(attachKey, attachment.content, {
