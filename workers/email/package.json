@@ -3,6 +3,7 @@
   "type": "module",
   "private": true,
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240620.0",
     "@types/bun": "latest"
   },
   "dependencies": {

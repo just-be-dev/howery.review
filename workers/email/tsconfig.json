@@ -8,5 +8,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "types": ["@cloudflare/workers-types", "node"]
-  }
+  },
+  "include": ["worker-configuration.d.ts", "src/**/*.ts"]
 }

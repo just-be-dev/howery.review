@@ -1,10 +1,8 @@
-import { listReviews } from "./src/lib/reviews";
-
 // Note: This file is mainly for documentation.
 // The actual application is an Astro site running on Cloudflare Workers.
 // See astro.config.mjs for the build configuration.
 
-console.log(`
+const info: string = `
 Howery.review - Review Platform
 ================================
 This is an Astro-based review application that supports both:
@@ -13,4 +11,6 @@ This is an Astro-based review application that supports both:
 
 Reviews are stored in Cloudflare R2 storage.
 See src/lib/reviews.ts for the review handling logic.
-`);
+`;
+
+console.log(info);
