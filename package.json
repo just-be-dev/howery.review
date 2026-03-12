@@ -10,8 +10,12 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@astrojs/check": "^0.9.7",
     "@astrojs/cloudflare": "^13.1.1",
     "astro": "^6.0.4",
+    "mammoth": "^1.11.0",
+    "mimetext": "^3.0.28",
+    "postal-mime": "^2.7.3",
     "wrangler": "^4.72.0"
   },
   "scripts": {

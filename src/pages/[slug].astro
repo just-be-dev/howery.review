@@ -1,0 +1,129 @@
+---
+import Base from "../layouts/Base.astro";
+import { getReview } from "../lib/reviews";
+import { env } from "cloudflare:workers";
+
+const { slug } = Astro.params;
+const bucket = env.ATTACHMENTS;
+const review = await getReview(bucket, slug!);
+
+if (!review) {
+  return Astro.redirect("/");
+}
+
+const date = new Date(review.date);
+const formatted = date.toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+---
+
+<Base title={review.title}>
+  <article class="review">
+    <header class="review-header">
+      <h2 class="review-heading">{review.title}</h2>
+      <p class="review-meta">
+        Reviewed by <strong>Howery</strong> &bull; {formatted}
+      </p>
+      <div class="ornament">❖</div>
+    </header>
+    <div class="review-body" set:html={review.html} />
+    <nav class="back-link">
+      <a href="/">&larr; Back to all reviews</a>
+    </nav>
+  </article>
+</Base>
+
+<style>
+  .review-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--red);
+  }
+
+  .review-heading {
+    font-family: "Playfair Display", serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 5vw, 3rem);
+    color: var(--red-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    line-height: 1.15;
+    margin-bottom: 0.75rem;
+  }
+
+  .review-meta {
+    font-family: "Special Elite", cursive;
+    font-size: 0.95rem;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+  }
+
+  .ornament {
+    margin-top: 1rem;
+    font-size: 1.5rem;
+    color: var(--red);
+  }
+
+  .review-body {
+    font-size: 1.05rem;
+    line-height: 1.8;
+  }
+
+  .review-body :global(p) {
+    margin-bottom: 1.25em;
+    text-indent: 1.5em;
+  }
+
+  .review-body :global(p:first-child) {
+    text-indent: 0;
+  }
+
+  .review-body :global(p:first-child::first-letter) {
+    font-family: "Playfair Display", serif;
+    font-size: 3.5em;
+    float: left;
+    line-height: 0.8;
+    margin-right: 0.08em;
+    margin-top: 0.05em;
+    color: var(--red);
+    font-weight: 900;
+  }
+
+  .review-body :global(h1),
+  .review-body :global(h2),
+  .review-body :global(h3) {
+    font-family: "Playfair Display", serif;
+    color: var(--red-dark);
+    margin: 2rem 0 1rem;
+  }
+
+  .review-body :global(strong) {
+    color: var(--red-dark);
+  }
+
+  .review-body :global(blockquote) {
+    border-left: 3px solid var(--red);
+    margin: 1.5em 0;
+    padding: 0.75em 1.5em;
+    font-style: italic;
+    background: var(--paper-dark);
+  }
+
+  .review-body :global(img) {
+    max-width: 100%;
+    height: auto;
+    margin: 1.5em 0;
+  }
+
+  .back-link {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--red);
+    text-align: center;
+    font-family: "Special Elite", cursive;
+    letter-spacing: 0.1em;
+  }
+</style>

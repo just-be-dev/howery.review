@@ -1,14 +1,103 @@
 ---
+import Base from "../layouts/Base.astro";
+import { listReviews } from "../lib/reviews";
+import { env } from "cloudflare:workers";
 
+const bucket = env.ATTACHMENTS;
+const reviews = await listReviews(bucket);
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>howery.review</title>
-  </head>
-  <body>
-    <h1>howery.review</h1>
-  </body>
-</html>
+<Base title="Home">
+  {
+    reviews.length === 0 ? (
+      <div class="empty">
+        <p class="empty-icon">🎬</p>
+        <p>No reviews yet. The presses are warming up.</p>
+      </div>
+    ) : (
+      <ul class="review-list">
+        {reviews.map((review) => {
+          const date = new Date(review.date);
+          const formatted = date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+          return (
+            <li class="review-item">
+              <a href={`/${review.slug}`}>
+                <span class="review-title">{review.title}</span>
+                <span class="review-date">{formatted}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    )
+  }
+</Base>
+
+<style>
+  .empty {
+    text-align: center;
+    padding: 4rem 1rem;
+    font-family: "Special Elite", cursive;
+    font-size: 1.2rem;
+    color: var(--gold);
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .review-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .review-item {
+    border-bottom: 1px solid var(--paper-dark);
+  }
+
+  .review-item:first-child {
+    border-top: 1px solid var(--paper-dark);
+  }
+
+  .review-item a {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 1.25rem 0.5rem;
+    text-decoration: none;
+    color: var(--ink);
+    transition: background 0.15s;
+  }
+
+  .review-item a:hover {
+    background: var(--paper-dark);
+  }
+
+  .review-title {
+    font-family: "Playfair Display", serif;
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: var(--red-dark);
+    line-height: 1.3;
+  }
+
+  .review-item a:hover .review-title {
+    text-decoration: underline;
+    text-decoration-style: wavy;
+    text-underline-offset: 3px;
+  }
+
+  .review-date {
+    font-family: "Special Elite", cursive;
+    font-size: 0.85rem;
+    color: var(--gold);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+</style>
