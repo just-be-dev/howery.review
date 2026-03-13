@@ -1,0 +1,436 @@
+---
+import Base from "../layouts/Base.astro";
+import { env } from "cloudflare:workers";
+import type { GuestbookEntry } from "./api/guestbook";
+
+const bucket = env.ATTACHMENTS;
+
+let entries: GuestbookEntry[] = [];
+try {
+  const obj = await bucket.get("guestbook/entries.json");
+  if (obj) {
+    entries = JSON.parse(await obj.text()) as GuestbookEntry[];
+  }
+} catch {
+  // No entries yet
+}
+
+const visitorNumber = entries.length + 1;
+---
+
+<Base title="Guestbook">
+  <div class="gb-wrapper">
+    <div class="gb-banner">
+      <div class="gb-sparkles" aria-hidden="true">✨ ★ ✨ ★ ✨ ★ ✨ ★ ✨ ★ ✨</div>
+      <h2 class="gb-title">Sign My Guestbook!</h2>
+      <p class="gb-subtitle">You are visitor <span class="gb-counter">#{visitorNumber}</span></p>
+      <div class="gb-sparkles" aria-hidden="true">✨ ★ ✨ ★ ✨ ★ ✨ ★ ✨ ★ ✨</div>
+    </div>
+
+    <div class="gb-rainbow" aria-hidden="true"></div>
+
+    <div class="gb-form-section">
+      <h3 class="gb-section-title">&#9733; Leave Your Mark &#9733;</h3>
+      <form id="guestbook-form" class="gb-form">
+        <div class="gb-field">
+          <label for="gb-name">Your Name <span class="required">*</span></label>
+          <input type="text" id="gb-name" name="name" required maxlength="100" placeholder="e.g. Joan Yang" />
+        </div>
+        <div class="gb-field">
+          <label for="gb-location">Location</label>
+          <input type="text" id="gb-location" name="location" maxlength="100" placeholder="e.g. San Francisco, CA" />
+        </div>
+        <div class="gb-field">
+          <label for="gb-website">Website</label>
+          <input type="url" id="gb-website" name="website" maxlength="200" placeholder="https://yoursite.com" />
+        </div>
+        <div class="gb-field">
+          <label for="gb-message">Message <span class="required">*</span></label>
+          <textarea id="gb-message" name="message" required maxlength="2000" rows="4" placeholder="Write something nice..."></textarea>
+        </div>
+        <div class="gb-field">
+          <button type="submit" class="gb-submit">
+            <span class="btn-stars">&#9733;</span> Sign the Guestbook! <span class="btn-stars">&#9733;</span>
+          </button>
+        </div>
+        <div id="gb-status" class="gb-status" aria-live="polite"></div>
+      </form>
+    </div>
+
+    <div class="gb-rainbow" aria-hidden="true"></div>
+
+    <div class="gb-entries-section">
+      <h3 class="gb-section-title">&#9829; Visitors Who Signed &#9829;</h3>
+
+      {entries.length === 0 ? (
+        <p class="gb-empty">No entries yet — be the first to sign!</p>
+      ) : (
+        <div id="gb-entries-list">
+          {[...entries].reverse().map((entry, i) => {
+            const date = new Date(entry.timestamp);
+            const formatted = date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            });
+            const entryNumber = entries.length - i;
+            return (
+              <div class="gb-entry">
+                <div class="gb-entry-header">
+                  <span class="gb-entry-num">#{entryNumber}</span>
+                  <span class="gb-entry-name">
+                    {entry.website ? (
+                      <a href={entry.website} target="_blank" rel="noopener noreferrer">{entry.name}</a>
+                    ) : (
+                      entry.name
+                    )}
+                  </span>
+                  {entry.location && <span class="gb-entry-location">📍 {entry.location}</span>}
+                  <span class="gb-entry-date">{formatted}</span>
+                </div>
+                <p class="gb-entry-message">{entry.message}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+
+    <div class="gb-rainbow" aria-hidden="true"></div>
+
+    <p class="gb-back"><a href="/">← Back to reviews</a></p>
+  </div>
+</Base>
+
+<style>
+  .gb-wrapper {
+    font-family: "Special Elite", cursive;
+  }
+
+  .gb-banner {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    background: var(--paper-dark);
+    border: 3px double var(--gold);
+    margin-bottom: 1rem;
+  }
+
+  .gb-title {
+    font-family: "Playfair Display", serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 900;
+    color: var(--red-dark);
+    text-shadow: 2px 2px 0 var(--gold), -1px -1px 0 #c084fc;
+    letter-spacing: 0.05em;
+    margin: 0.5rem 0;
+    animation: pulse-title 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse-title {
+    from { text-shadow: 2px 2px 0 var(--gold), -1px -1px 0 #c084fc; }
+    to   { text-shadow: 3px 3px 0 var(--gold-light), -2px -2px 0 #a855f7; }
+  }
+
+  .gb-subtitle {
+    font-size: 1rem;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+  }
+
+  .gb-counter {
+    color: var(--red);
+    font-weight: bold;
+    font-size: 1.2em;
+  }
+
+  .gb-sparkles {
+    color: var(--gold);
+    letter-spacing: 0.3em;
+    font-size: 0.85rem;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .gb-rainbow {
+    height: 6px;
+    background: linear-gradient(
+      to right,
+      #b91c1c, #b8860b, #15803d, #1d4ed8, #7c3aed, #be185d
+    );
+    margin: 1.25rem 0;
+    border-radius: 3px;
+  }
+
+  .gb-section-title {
+    font-family: "Playfair Display", serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--red-dark);
+    letter-spacing: 0.1em;
+    text-align: center;
+    margin-bottom: 1.25rem;
+  }
+
+  /* Form */
+  .gb-form-section {
+    background: var(--paper-dark);
+    border: 2px solid var(--gold);
+    padding: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .gb-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .gb-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .gb-field label {
+    font-size: 0.9rem;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .required {
+    color: var(--red);
+  }
+
+  .gb-field input,
+  .gb-field textarea {
+    font-family: "Libre Baskerville", Georgia, serif;
+    font-size: 1rem;
+    background: var(--paper);
+    border: 2px solid var(--gold);
+    color: var(--ink);
+    padding: 0.5rem 0.75rem;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .gb-field input:focus,
+  .gb-field textarea:focus {
+    border-color: var(--red);
+  }
+
+  .gb-field textarea {
+    resize: vertical;
+    min-height: 6rem;
+  }
+
+  .gb-submit {
+    font-family: "Special Elite", cursive;
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+    background: var(--red-dark);
+    color: var(--paper);
+    border: 3px solid var(--gold);
+    padding: 0.65rem 1.5rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    width: 100%;
+  }
+
+  .gb-submit:hover {
+    background: var(--red);
+    transform: translateY(-1px);
+  }
+
+  .gb-submit:active {
+    transform: translateY(0);
+  }
+
+  .btn-stars {
+    color: var(--gold);
+  }
+
+  .gb-status {
+    text-align: center;
+    font-size: 0.9rem;
+    min-height: 1.5rem;
+  }
+
+  .gb-status.success {
+    color: #15803d;
+  }
+
+  .gb-status.error {
+    color: var(--red);
+  }
+
+  /* Entries */
+  .gb-entries-section {
+    margin-bottom: 0.5rem;
+  }
+
+  .gb-empty {
+    text-align: center;
+    color: var(--gold);
+    font-size: 1rem;
+    padding: 2rem;
+    border: 2px dashed var(--gold);
+  }
+
+  .gb-entry {
+    border: 1px solid var(--paper-dark);
+    border-left: 4px solid var(--gold);
+    padding: 1rem 1rem 1rem 1.25rem;
+    margin-bottom: 1rem;
+    background: var(--paper-dark);
+  }
+
+  .gb-entry-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .gb-entry-num {
+    font-size: 0.75rem;
+    color: var(--gold);
+    opacity: 0.7;
+  }
+
+  .gb-entry-name {
+    font-family: "Playfair Display", serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--red-dark);
+  }
+
+  .gb-entry-name a {
+    color: var(--red-dark);
+  }
+
+  .gb-entry-location {
+    font-size: 0.8rem;
+    color: var(--gold);
+  }
+
+  .gb-entry-date {
+    font-size: 0.8rem;
+    color: var(--gold);
+    margin-left: auto;
+  }
+
+  .gb-entry-message {
+    font-family: "Libre Baskerville", Georgia, serif;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--ink);
+    white-space: pre-wrap;
+  }
+
+  .gb-back {
+    text-align: center;
+    padding: 1rem 0;
+    font-size: 0.9rem;
+  }
+</style>
+
+<script>
+  const form = document.getElementById("guestbook-form") as HTMLFormElement;
+  const status = document.getElementById("gb-status") as HTMLDivElement;
+  const entriesList = document.getElementById("gb-entries-list");
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const submitBtn = form.querySelector("button[type=submit]") as HTMLButtonElement;
+    submitBtn.disabled = true;
+    status.textContent = "Signing...";
+    status.className = "gb-status";
+
+    const data = {
+      name: (form.querySelector("#gb-name") as HTMLInputElement).value,
+      location: (form.querySelector("#gb-location") as HTMLInputElement).value,
+      website: (form.querySelector("#gb-website") as HTMLInputElement).value,
+      message: (form.querySelector("#gb-message") as HTMLTextAreaElement).value,
+    };
+
+    try {
+      const res = await fetch("/api/guestbook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        const entry = await res.json() as {
+          name: string;
+          location?: string;
+          website?: string;
+          message: string;
+          timestamp: string;
+        };
+
+        status.textContent = "✓ Thanks for signing! Your entry has been added.";
+        status.className = "gb-status success";
+        form.reset();
+
+        // Prepend new entry to the list
+        if (entriesList) {
+          const date = new Date(entry.timestamp);
+          const formatted = date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+
+          const existingCount = entriesList.querySelectorAll(".gb-entry").length;
+          const entryNumber = existingCount + 1;
+
+          const el = document.createElement("div");
+          el.className = "gb-entry";
+          el.innerHTML = `
+            <div class="gb-entry-header">
+              <span class="gb-entry-num">#${entryNumber}</span>
+              <span class="gb-entry-name">${
+                entry.website
+                  ? `<a href="${escAttr(entry.website)}" target="_blank" rel="noopener noreferrer">${escHtml(entry.name)}</a>`
+                  : escHtml(entry.name)
+              }</span>
+              ${entry.location ? `<span class="gb-entry-location">📍 ${escHtml(entry.location)}</span>` : ""}
+              <span class="gb-entry-date">${formatted}</span>
+            </div>
+            <p class="gb-entry-message">${escHtml(entry.message)}</p>
+          `;
+          entriesList.insertBefore(el, entriesList.firstChild);
+        } else {
+          // No entries list yet — reload to show it properly
+          window.location.reload();
+        }
+      } else {
+        const err = await res.json() as { error?: string };
+        status.textContent = `Error: ${err.error ?? "Something went wrong."}`;
+        status.className = "gb-status error";
+      }
+    } catch {
+      status.textContent = "Network error — please try again.";
+      status.className = "gb-status error";
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+
+  function escHtml(str: string): string {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function escAttr(str: string): string {
+    return escHtml(str);
+  }
+</script>

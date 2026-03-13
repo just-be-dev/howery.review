@@ -129,6 +129,28 @@ const { title } = Astro.props;
         transform: scale(1.2);
       }
 
+      .nav-links {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1.5rem;
+        margin-top: 0.75rem;
+      }
+
+      .nav-link {
+        font-family: "Special Elite", cursive;
+        font-size: 0.8rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--gold);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      .nav-link:hover {
+        color: var(--red);
+      }
+
       .site-footer {
         text-align: center;
         padding: 2rem 1rem;
@@ -145,13 +167,16 @@ const { title } = Astro.props;
     <header class="site-header">
       <h1 class="site-title"><a href="/">Howery's Review</a></h1>
       <p class="site-subtitle">Motion Picture Critiques & Commentary</p>
-      <a href="/rss" class="rss-link" title="Subscribe to RSS feed">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 11a9 9 0 0 1 9 9"></path>
-          <path d="M4 4a16 16 0 0 1 16 16"></path>
-          <circle cx="5" cy="19" r="1"></circle>
-        </svg>
-      </a>
+      <nav class="nav-links">
+        <a href="/guestbook" class="nav-link">&#9829; Guestbook</a>
+        <a href="/rss" class="rss-link" title="Subscribe to RSS feed">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 11a9 9 0 0 1 9 9"></path>
+            <path d="M4 4a16 16 0 0 1 16 16"></path>
+            <circle cx="5" cy="19" r="1"></circle>
+          </svg>
+        </a>
+      </nav>
     </header>
     <main class="container">
       <slot />
