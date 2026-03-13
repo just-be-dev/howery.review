@@ -83,7 +83,6 @@ async function handleHelpEmail(
       headers: {
         Authorization: `Bearer ${env.GITHUB_TOKEN}`,
         Accept: "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
         "User-Agent": "howery-review-email-worker",
       },
       body: JSON.stringify({
