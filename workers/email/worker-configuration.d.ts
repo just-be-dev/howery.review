@@ -2,4 +2,5 @@
 interface Env {
   EMAIL: SendEmailMessage;
   ATTACHMENTS: R2Bucket;
+  GITHUB_TOKEN: string;
 }
