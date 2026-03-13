@@ -1,5 +1,5 @@
 import mammoth from "mammoth";
-import pdfParse from "pdf-parse";
+import { extractText } from "unpdf";
 
 export interface Review {
   title: string;
@@ -20,10 +20,9 @@ async function getReviewFile(bucket: R2Bucket, slug: string): Promise<{ obj: R2O
 }
 
 async function convertPdfToHtml(buffer: ArrayBuffer): Promise<string> {
-  const data = await pdfParse(buffer);
+  const { text } = await extractText(new Uint8Array(buffer));
 
-  // Extract text and format as simple HTML
-  const paragraphs = data.text
+  const paragraphs = text
     .split('\n')
     .filter((line: string) => line.trim())
     .map((line: string) => `<p>${escapeHtml(line)}</p>`)
