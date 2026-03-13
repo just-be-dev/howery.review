@@ -1,8 +1,15 @@
 import type { APIRoute } from "astro";
-import { verifyAuth } from "../../../lib/auth";
+import { verifyAuth, isValidSlug, verifyOrigin } from "../../../lib/auth";
 import { env } from "cloudflare:workers";
 
 export const PATCH: APIRoute = async ({ request, params }) => {
+  if (!verifyOrigin(request)) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const password = env.EDIT_PASSWORD;
   if (!password || !(await verifyAuth(request, password))) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -12,8 +19,8 @@ export const PATCH: APIRoute = async ({ request, params }) => {
   }
 
   const slug = params.slug;
-  if (!slug) {
-    return new Response(JSON.stringify({ error: "Missing slug" }), {
+  if (!slug || !isValidSlug(slug)) {
+    return new Response(JSON.stringify({ error: "Invalid slug" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
@@ -57,6 +64,13 @@ export const PATCH: APIRoute = async ({ request, params }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, params }) => {
+  if (!verifyOrigin(request)) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const password = env.EDIT_PASSWORD;
   if (!password || !(await verifyAuth(request, password))) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -66,8 +80,8 @@ export const DELETE: APIRoute = async ({ request, params }) => {
   }
 
   const slug = params.slug;
-  if (!slug) {
-    return new Response(JSON.stringify({ error: "Missing slug" }), {
+  if (!slug || !isValidSlug(slug)) {
+    return new Response(JSON.stringify({ error: "Invalid slug" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
@@ -75,9 +89,12 @@ export const DELETE: APIRoute = async ({ request, params }) => {
 
   try {
     const bucket = env.ATTACHMENTS as R2Bucket;
-    const key = `reviews/${slug}/review.docx`;
+    const prefix = `reviews/${slug}/`;
 
-    await bucket.delete(key);
+    const listed = await bucket.list({ prefix });
+    if (listed.objects.length > 0) {
+      await bucket.delete(listed.objects.map((obj) => obj.key));
+    }
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,

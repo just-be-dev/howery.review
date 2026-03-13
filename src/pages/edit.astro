@@ -7,7 +7,7 @@ import { env } from "cloudflare:workers";
 const password = env.EDIT_PASSWORD;
 const isAuthed = password && await verifyAuth(Astro.request, password);
 
-let reviews = [];
+let reviews: { title: string; slug: string; date: string }[] = [];
 if (isAuthed) {
   const bucket = env.ATTACHMENTS;
   reviews = await listReviews(bucket);

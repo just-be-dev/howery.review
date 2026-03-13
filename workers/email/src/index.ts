@@ -27,23 +27,16 @@ async function handlePostEmail(
     (a) =>
       a.mimeType ===
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-      a.mimeType === "application/pdf" ||
       a.filename?.endsWith(".docx") ||
-      a.filename?.endsWith(".doc") ||
-      a.filename?.endsWith(".pdf"),
+      a.filename?.endsWith(".doc"),
   );
 
   if (!reviewAttachment) {
-    message.setReject("No Word document or PDF attachment found");
+    message.setReject("No Word document attachment found");
     return;
   }
 
-  const isPdf =
-    reviewAttachment.mimeType === "application/pdf" ||
-    reviewAttachment.filename?.endsWith(".pdf");
-  const extension = isPdf ? "pdf" : "docx";
-
-  const key = `reviews/${slug}/review.${extension}`;
+  const key = `reviews/${slug}/review.docx`;
   await env.ATTACHMENTS.put(key, reviewAttachment.content, {
     httpMetadata: { contentType: reviewAttachment.mimeType },
     customMetadata: {
