@@ -2,7 +2,7 @@
   "compatibility_date": "2026-03-10",
   "compatibility_flags": ["global_fetch_strictly_public", "nodejs_compat"],
   "name": "howery-review",
-  "main": "@astrojs/cloudflare/entrypoints/server",
+  "main": "./src/worker.ts",
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
@@ -14,6 +14,11 @@
     {
       "binding": "ATTACHMENTS",
       "bucket_name": "howery-review-attachments",
+    },
+  ],
+  "send_email": [
+    {
+      "name": "EMAIL",
     },
   ],
 }

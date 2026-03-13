@@ -23,16 +23,7 @@ run = "astro build"
 description = "Preview the production build"
 run = "astro preview"
 
-[tasks."deploy:main"]
-description = "Deploy main site"
+[tasks.deploy]
+description = "Deploy to Cloudflare"
 depends = ["build"]
 run = "wrangler deploy"
-
-[tasks."deploy:email"]
-description = "Deploy email worker"
-dir = "workers/email"
-run = "wrangler deploy --config wrangler.jsonc"
-
-[tasks.deploy]
-description = "Deploy both workers"
-depends = ["deploy:main", "deploy:email"]

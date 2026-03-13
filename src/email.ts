@@ -74,8 +74,6 @@ async function handleHelpEmail(
   const subject = parsed.subject ?? "Help request";
   const body = parsed.text ?? parsed.html ?? "(no body)";
 
-  const issueBody = body;
-
   const response = await fetch(
     `https://api.github.com/repos/${GITHUB_REPO}/issues`,
     {
@@ -87,7 +85,7 @@ async function handleHelpEmail(
       },
       body: JSON.stringify({
         title: subject,
-        body: issueBody,
+        body: body,
         labels: ["help-request"],
       }),
     },
@@ -99,35 +97,36 @@ async function handleHelpEmail(
     throw new Error(`Failed to create GitHub issue: ${response.status}`);
   }
 
-  const issue = (await response.json()) as { number: number; html_url: string };
+  const issue = (await response.json()) as {
+    number: number;
+    html_url: string;
+  };
   console.log(`Created GitHub issue #${issue.number}: ${issue.html_url}`);
 }
 
-export default {
-  async email(
-    message: ForwardableEmailMessage,
-    env: Env,
-    ctx: ExecutionContext,
-  ) {
-    const allowedSenders = ["howeryp@hotmail.com", "joyangda@gmail.com"];
-    if (!allowedSenders.includes(message.from)) {
-      message.setReject("Unauthorized sender");
-      return;
-    }
+const ALLOWED_SENDERS = ["howeryp@hotmail.com", "joyangda@gmail.com"];
 
-    const rawEmail = await new Response(message.raw).arrayBuffer();
-    const parsed = await PostalMime.parse(rawEmail);
+export async function handleEmail(
+  message: ForwardableEmailMessage,
+  env: Env,
+) {
+  if (!ALLOWED_SENDERS.includes(message.from)) {
+    message.setReject("Unauthorized sender");
+    return;
+  }
 
-    if (message.to === "post@howery.review") {
-      await handlePostEmail(message, parsed, env);
-    } else if (message.to === "help@howery.review") {
-      await handleHelpEmail(parsed, env);
-    } else {
-      message.setReject(
-        `The address "${message.to}" is not recognized. ` +
-          "To post a review, send your email to post@howery.review. " +
-          "If you need help, send your email to help@howery.review instead.",
-      );
-    }
-  },
-} satisfies ExportedHandler<Env>;
+  const rawEmail = await new Response(message.raw).arrayBuffer();
+  const parsed = await PostalMime.parse(rawEmail);
+
+  if (message.to === "post@howery.review") {
+    await handlePostEmail(message, parsed, env);
+  } else if (message.to === "help@howery.review") {
+    await handleHelpEmail(parsed, env);
+  } else {
+    message.setReject(
+      `The address "${message.to}" is not recognized. ` +
+        "To post a review, send your email to post@howery.review. " +
+        "If you need help, send your email to help@howery.review instead.",
+    );
+  }
+}

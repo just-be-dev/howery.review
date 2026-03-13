@@ -7,6 +7,7 @@ declare namespace Cloudflare {
 		EMAIL: SendEmail;
 		ASSETS: Fetcher;
 		EDIT_PASSWORD: string;
+		GITHUB_TOKEN: string;
 	}
 }
 interface Env extends Cloudflare.Env {}
