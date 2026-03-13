@@ -15,7 +15,10 @@ async function handlePostEmail(
   env: Env,
 ) {
   if (!parsed.attachments.length) {
-    message.setReject("No attachments found");
+    message.setReject(
+      "Your email to post@howery.review did not include any attachments. " +
+        "To post a review, please attach a Word document (.docx or .doc) to your email and send it again.",
+    );
     return;
   }
 
@@ -32,7 +35,11 @@ async function handlePostEmail(
   );
 
   if (!reviewAttachment) {
-    message.setReject("No Word document attachment found");
+    message.setReject(
+      "Your email to post@howery.review included attachments, but none of them were a Word document. " +
+        "Please attach your review as a .docx or .doc file and send it again. " +
+        "If you saved your review as a PDF or other format, please re-save it as a Word document first.",
+    );
     return;
   }
 
@@ -116,7 +123,11 @@ export default {
     } else if (message.to === "help@howery.review") {
       await handleHelpEmail(parsed, env);
     } else {
-      message.setReject("Unknown recipient");
+      message.setReject(
+        `The address "${message.to}" is not recognized. ` +
+          "To post a review, send your email to post@howery.review. " +
+          "If you need help, send your email to help@howery.review instead.",
+      );
     }
   },
 } satisfies ExportedHandler<Env>;
