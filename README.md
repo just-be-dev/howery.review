@@ -1,15 +1,24 @@
 # howery.review
 
-To install dependencies:
+## Setup
+
+Install [Mise](https://mise.jdx.dev) and run:
 
 ```bash
-bun install
+mise install
 ```
 
-To run:
+This will install the correct version of Bun and project dependencies automatically.
+
+## Development
 
 ```bash
-bun run index.ts
+mise run dev
 ```
 
-This project was created using `bun init` in bun v1.3.10. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+## Build & Deploy
+
+```bash
+mise run build
+mise run deploy
+```
