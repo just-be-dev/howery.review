@@ -8,6 +8,9 @@ declare namespace Cloudflare {
 		ASSETS: Fetcher;
 		EDIT_PASSWORD: string;
 		GITHUB_TOKEN: string;
+		DB: D1Database;
+		AI: Ai;
+		GUESTBOOK_RATE_LIMIT: RateLimit;
 	}
 }
 interface Env extends Cloudflare.Env {}

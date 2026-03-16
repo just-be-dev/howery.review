@@ -1,0 +1,267 @@
+---
+import Base from "../layouts/Base.astro";
+import { env } from "cloudflare:workers";
+
+const db = env.DB;
+const hasSigned = Astro.cookies.has("guestbook_signed");
+
+const { results: entries } = await db
+  .prepare("SELECT id, name, message, created_at FROM guestbook_entries ORDER BY created_at DESC LIMIT 200")
+  .all<{ id: number; name: string; message: string; created_at: string }>();
+---
+
+<Base title="Guestbook">
+  <h2 class="page-heading">Guestbook</h2>
+  <p class="page-intro">Leave a note for the proprietor and fellow readers.</p>
+
+  {hasSigned ? (
+    <p class="signed-notice">Thanks for signing the guestbook!</p>
+  ) : (
+  <form id="guestbook-form" class="guestbook-form">
+    <div class="form-group">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" required maxlength="100" placeholder="Your name" />
+    </div>
+    <div class="form-group">
+      <label for="email">Email <span class="hint">(private, never displayed)</span></label>
+      <input type="email" id="email" name="email" required maxlength="254" placeholder="you@example.com" />
+    </div>
+    <div class="form-group">
+      <label for="message">Message</label>
+      <textarea id="message" name="message" required maxlength="2000" rows="4" placeholder="Say something nice..."></textarea>
+    </div>
+    <button type="submit">Sign the Guestbook</button>
+    <p id="form-status" class="form-status" aria-live="polite"></p>
+  </form>
+  )}
+
+  <section class="entries">
+    {entries.length === 0 ? (
+      <p class="empty">No entries yet. Be the first to sign!</p>
+    ) : (
+      entries.map((entry) => {
+        const date = new Date(entry.created_at + "Z");
+        const formatted = date.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+        return (
+          <article class="entry">
+            <p class="entry-message">{entry.message}</p>
+            <footer class="entry-meta">
+              <span class="entry-name">{entry.name}</span>
+              <span class="entry-date">{formatted}</span>
+            </footer>
+          </article>
+        );
+      })
+    )}
+  </section>
+</Base>
+
+<script>
+  const form = document.getElementById("guestbook-form") as HTMLFormElement;
+  const status = document.getElementById("form-status")!;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector("button")!;
+    btn.disabled = true;
+    status.textContent = "Submitting...";
+    status.className = "form-status";
+
+    const data = {
+      name: (form.querySelector("#name") as HTMLInputElement).value,
+      email: (form.querySelector("#email") as HTMLInputElement).value,
+      message: (form.querySelector("#message") as HTMLTextAreaElement).value,
+    };
+
+    try {
+      const res = await fetch("/api/guestbook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const json = await res.json();
+
+      if (res.ok) {
+        status.textContent = "Thanks for signing the guestbook!";
+        status.className = "form-status success";
+        form.reset();
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        status.textContent = json.error || "Something went wrong.";
+        status.className = "form-status error";
+      }
+    } catch {
+      status.textContent = "Network error. Please try again.";
+      status.className = "form-status error";
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  .signed-notice {
+    text-align: center;
+    font-family: "Special Elite", cursive;
+    color: var(--gold);
+    margin-bottom: 2rem;
+    letter-spacing: 0.05em;
+  }
+
+  .page-heading {
+    font-family: "Playfair Display", serif;
+    font-weight: 900;
+    font-size: 2.5rem;
+    color: var(--red-dark);
+    text-align: center;
+    margin-bottom: 0.25rem;
+  }
+
+  .page-intro {
+    text-align: center;
+    font-family: "Special Elite", cursive;
+    color: var(--gold);
+    margin-bottom: 2rem;
+    letter-spacing: 0.05em;
+  }
+
+  .guestbook-form {
+    background: var(--paper-dark);
+    padding: 1.5rem;
+    border: 1px solid var(--gold);
+    margin-bottom: 2.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group label {
+    display: block;
+    font-family: "Playfair Display", serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 0.3rem;
+    color: var(--red-dark);
+  }
+
+  .hint {
+    font-family: "Libre Baskerville", serif;
+    font-weight: 400;
+    font-size: 0.8rem;
+    color: var(--gold);
+  }
+
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    font-family: "Libre Baskerville", serif;
+    font-size: 0.95rem;
+    border: 1px solid var(--gold);
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: 2px solid var(--red);
+    outline-offset: 1px;
+  }
+
+  .form-group textarea {
+    resize: vertical;
+    min-height: 5rem;
+  }
+
+  button[type="submit"] {
+    font-family: "Special Elite", cursive;
+    font-size: 1rem;
+    padding: 0.6rem 1.5rem;
+    background: var(--red-dark);
+    color: var(--paper);
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: background 0.15s;
+  }
+
+  button[type="submit"]:hover {
+    background: var(--red);
+  }
+
+  button[type="submit"]:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .form-status {
+    margin-top: 0.75rem;
+    font-family: "Special Elite", cursive;
+    font-size: 0.9rem;
+    min-height: 1.2em;
+  }
+
+  .form-status.success {
+    color: #15803d;
+  }
+
+  .form-status.error {
+    color: var(--red);
+  }
+
+  .entries {
+    margin-top: 1rem;
+  }
+
+  .empty {
+    text-align: center;
+    font-family: "Special Elite", cursive;
+    color: var(--gold);
+    padding: 2rem 0;
+  }
+
+  .entry {
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--paper-dark);
+  }
+
+  .entry:first-child {
+    border-top: 1px solid var(--paper-dark);
+  }
+
+  .entry-message {
+    font-size: 1rem;
+    line-height: 1.7;
+    white-space: pre-line;
+    margin-bottom: 0.5rem;
+  }
+
+  .entry-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+  }
+
+  .entry-name {
+    font-family: "Playfair Display", serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--red-dark);
+  }
+
+  .entry-date {
+    font-family: "Special Elite", cursive;
+    font-size: 0.8rem;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+</style>

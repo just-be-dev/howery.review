@@ -21,4 +21,25 @@
       "name": "EMAIL",
     },
   ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "howery-review-guestbook",
+      "database_id": "fedc3f4a-91a2-4430-9907-9eeaf658f7cb",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "ai": {
+    "binding": "AI",
+  },
+  "ratelimits": [
+    {
+      "name": "GUESTBOOK_RATE_LIMIT",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 1,
+        "period": 60,
+      },
+    },
+  ],
 }
