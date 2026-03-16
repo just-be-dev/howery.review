@@ -11,6 +11,7 @@ export const GET: APIRoute = async (context) => {
     title: "Howery's Review",
     description: "Motion Picture Critiques & Commentary",
     site: context.site!,
+    stylesheet: "/rss-style.xsl",
     items: reviews.map((review) => ({
       title: review.title,
       pubDate: new Date(review.date),
