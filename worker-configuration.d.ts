@@ -6,6 +6,7 @@ declare namespace Cloudflare {
 		ATTACHMENTS: R2Bucket;
 		EMAIL: SendEmail;
 		ASSETS: Fetcher;
+		ALLOWED_SENDERS: string;
 		EDIT_PASSWORD: string;
 		GITHUB_TOKEN: string;
 		DB: D1Database;

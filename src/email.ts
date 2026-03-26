@@ -104,13 +104,12 @@ async function handleHelpEmail(
   console.log(`Created GitHub issue #${issue.number}: ${issue.html_url}`);
 }
 
-const ALLOWED_SENDERS = ["howeryp@hotmail.com", "joyangda@gmail.com"];
-
 export async function handleEmail(
   message: ForwardableEmailMessage,
   env: Env,
 ) {
-  if (!ALLOWED_SENDERS.includes(message.from)) {
+  const allowedSenders = env.ALLOWED_SENDERS.split(",").map((s) => s.trim());
+  if (!allowedSenders.includes(message.from)) {
     message.setReject("Unauthorized sender");
     return;
   }
