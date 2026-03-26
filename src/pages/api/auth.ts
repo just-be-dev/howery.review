@@ -27,7 +27,7 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    if (!(await constantTimeEqual(password, expectedPassword))) {
+    if (!(await constantTimeEqual(password.toLowerCase(), expectedPassword.toLowerCase()))) {
       return new Response(null, {
         status: 302,
         headers: { Location: "/edit?error=1" },
